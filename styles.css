@@ -182,6 +182,7 @@ h1 {
 
 .control {
   position: relative;
+  min-width: 0;
   display: block;
 }
 
@@ -327,12 +328,15 @@ kbd {
 }
 
 .quiz-list {
+  min-width: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
 }
 
 .quiz-card {
   position: relative;
+  min-width: 0;
   padding: 18px 20px 15px;
   background: var(--paper);
   border: 1px solid var(--line);
@@ -362,6 +366,10 @@ kbd {
   gap: 15px;
 }
 
+.quiz-card__main > * {
+  min-width: 0;
+}
+
 .quiz-card__id {
   padding-top: 3px;
   color: var(--muted);
@@ -372,6 +380,7 @@ kbd {
 
 .quiz-card__question {
   margin: 0;
+  overflow-wrap: anywhere;
   font-size: 14px;
   font-weight: 560;
   line-height: 1.8;
@@ -454,7 +463,9 @@ kbd {
 }
 
 .answer-panel__alt {
+  min-width: 0;
   margin-left: auto;
+  overflow-wrap: anywhere;
   color: var(--muted);
   font-size: 10px;
   text-align: right;
@@ -490,8 +501,10 @@ kbd {
 }
 
 .quiz-card__meta {
+  min-width: 0;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 7px;
   margin: 12px 0 0 77px;
 }
@@ -532,10 +545,12 @@ button.chip:hover {
 
 .quiz-card__summary-note {
   min-width: 0;
+  flex: 1 1 180px;
   margin-left: auto;
   overflow: hidden;
   color: var(--muted);
   font-size: 9px;
+  text-align: right;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -596,17 +611,38 @@ button.chip:hover {
   border-radius: 8px;
 }
 
-@media (max-width: 980px) {
+@media (max-width: 1120px) {
   .controls {
-    grid-template-columns: minmax(240px, 1fr) repeat(2, auto);
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
   }
 
   .control--search {
     grid-column: 1 / -1;
   }
 
+  .control select {
+    width: 100%;
+    max-width: none;
+  }
+
   .shortcut-help {
     display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .source-meta {
+    display: none;
+  }
+
+  .controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .control--search,
+  .control:nth-of-type(4),
+  .answer-all-button {
+    grid-column: 1 / -1;
   }
 
   .answer-panel__details {
@@ -649,10 +685,11 @@ button.chip:hover {
   }
 
   .controls {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .control--search,
+  .control:nth-of-type(4),
   .answer-all-button {
     grid-column: 1 / -1;
   }
