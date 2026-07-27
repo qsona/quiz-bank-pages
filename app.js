@@ -152,9 +152,6 @@ function matchesSearch(question) {
     question.display_name,
     ...(question.alt_answers ?? []),
     ...(question.tags ?? []),
-    question.confirm_point,
-    question.note,
-    question.difficulty_reason,
   ];
 
   return searchable.some((value) => normalize(value).includes(query));
