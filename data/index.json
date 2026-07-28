@@ -1,13 +1,21 @@
 {
-  "generatedAt": "2026-07-27T12:32:05.512Z",
+  "generatedAt": "2026-07-28T11:02:10.461Z",
   "themes": [
     {
       "id": "greek-mythology",
       "title": "ギリシャ神話",
       "count": 81,
-      "updatedAt": "2026-07-27T12:32:02.998Z",
+      "updatedAt": "2026-07-28T11:02:07.496Z",
       "sourcePath": "themes/greek-mythology/questions.jsonl",
       "dataPath": "./data/greek-mythology.json"
+    },
+    {
+      "id": "music-games",
+      "title": "音楽ゲーム",
+      "count": 130,
+      "updatedAt": "2026-07-28T11:02:07.506Z",
+      "sourcePath": "themes/music-games/questions.jsonl",
+      "dataPath": "./data/music-games.json"
     }
   ]
 }
