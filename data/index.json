@@ -1,11 +1,19 @@
 {
-  "generatedAt": "2026-07-28T14:58:32.200Z",
+  "generatedAt": "2026-07-31T04:12:53.327Z",
   "themes": [
+    {
+      "id": "design",
+      "title": "デザイン",
+      "count": 46,
+      "updatedAt": "2026-07-31T04:12:51.937Z",
+      "sourcePath": "themes/design/questions.jsonl",
+      "dataPath": "./data/design.json"
+    },
     {
       "id": "greek-mythology",
       "title": "ギリシャ神話",
       "count": 81,
-      "updatedAt": "2026-07-28T14:58:28.029Z",
+      "updatedAt": "2026-07-31T04:12:51.940Z",
       "sourcePath": "themes/greek-mythology/questions.jsonl",
       "dataPath": "./data/greek-mythology.json"
     },
@@ -13,9 +21,17 @@
       "id": "music-games",
       "title": "音楽ゲーム",
       "count": 130,
-      "updatedAt": "2026-07-28T14:58:28.040Z",
+      "updatedAt": "2026-07-31T04:12:51.949Z",
       "sourcePath": "themes/music-games/questions.jsonl",
       "dataPath": "./data/music-games.json"
+    },
+    {
+      "id": "splatoon",
+      "title": "スプラトゥーン",
+      "count": 45,
+      "updatedAt": "2026-07-31T04:12:51.957Z",
+      "sourcePath": "themes/splatoon/questions.jsonl",
+      "dataPath": "./data/splatoon.json"
     }
   ]
 }
