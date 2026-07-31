@@ -7,8 +7,8 @@
     <meta name="theme-color" content="#225f4b">
     <link rel="icon" href="./favicon.svg" type="image/svg+xml">
     <title>Quiz Bank Browser</title>
-    <link rel="stylesheet" href="./styles.css?v=20260727-focus">
-    <script src="./app.js?v=20260727-search-scope" defer></script>
+    <link rel="stylesheet" href="./styles.css?v=20260731-shuffle">
+    <script src="./app.js?v=20260731-seeded-shuffle" defer></script>
   </head>
   <body>
     <header class="topbar">
@@ -101,8 +101,12 @@
             <option value="id">ID順</option>
             <option value="difficulty-asc">難易度：易しい順</option>
             <option value="difficulty-desc">難易度：難しい順</option>
+            <option value="shuffle">シャッフル</option>
           </select>
         </label>
+        <button class="shuffle-button" id="shuffle-button" type="button">
+          シャッフル
+        </button>
       </section>
 
       <section id="quiz-list" class="quiz-list" aria-label="問題一覧"></section>

@@ -9,6 +9,7 @@ const state = {
   difficulty: "",
   tag: "",
   sort: "id",
+  shuffleSeed: "",
 };
 
 const elements = {
@@ -24,6 +25,7 @@ const elements = {
   resultCount: document.querySelector("#result-count"),
   screenReaderStatus: document.querySelector("#screen-reader-status"),
   searchInput: document.querySelector("#search-input"),
+  shuffleButton: document.querySelector("#shuffle-button"),
   sortSelect: document.querySelector("#sort-select"),
   sourceMeta: document.querySelector("#source-meta"),
   statChecked: document.querySelector("#stat-checked"),
@@ -75,14 +77,77 @@ function announce(message) {
   });
 }
 
-function getThemeFromUrl() {
-  return new URLSearchParams(window.location.search).get("theme");
+function getViewStateFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const sort = ["id", "difficulty-asc", "difficulty-desc", "shuffle"].includes(params.get("sort"))
+    ? params.get("sort")
+    : "id";
+  return {
+    theme: params.get("theme"),
+    search: params.get("q") ?? "",
+    difficulty: ["1", "2", "3", "4", "5"].includes(params.get("difficulty"))
+      ? params.get("difficulty")
+      : "",
+    tag: params.get("tag") ?? "",
+    sort,
+    shuffleSeed: sort === "shuffle" ? params.get("seed") ?? "" : "",
+  };
 }
 
-function setThemeInUrl(themeId) {
+function setOptionalUrlParam(params, name, value) {
+  if (value) {
+    params.set(name, value);
+  } else {
+    params.delete(name);
+  }
+}
+
+function syncViewStateToUrl() {
   const url = new URL(window.location.href);
-  url.searchParams.set("theme", themeId);
+  url.searchParams.set("theme", state.theme.id);
+  setOptionalUrlParam(url.searchParams, "q", state.search.trim());
+  setOptionalUrlParam(url.searchParams, "difficulty", state.difficulty);
+  setOptionalUrlParam(url.searchParams, "tag", state.tag);
+  setOptionalUrlParam(url.searchParams, "sort", state.sort === "id" ? "" : state.sort);
+  setOptionalUrlParam(
+    url.searchParams,
+    "seed",
+    state.sort === "shuffle" ? state.shuffleSeed : ""
+  );
   window.history.replaceState({}, "", url);
+}
+
+function generateShuffleSeed() {
+  const values = new Uint32Array(2);
+  window.crypto.getRandomValues(values);
+  return `${values[0].toString(36)}${values[1].toString(36)}`;
+}
+
+function seedToUint32(seed) {
+  let hash = 2166136261;
+  for (const character of seed) {
+    hash ^= character.codePointAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function seededShuffle(items, seed) {
+  const shuffled = [...items];
+  let randomState = seedToUint32(seed);
+  const random = () => {
+    randomState += 0x6d2b79f5;
+    let value = randomState;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const targetIndex = Math.floor(random() * (index + 1));
+    [shuffled[index], shuffled[targetIndex]] = [shuffled[targetIndex], shuffled[index]];
+  }
+  return shuffled;
 }
 
 function populateThemeSelect() {
@@ -167,17 +232,39 @@ function compareQuestions(left, right) {
   return collator.compare(left.id, right.id);
 }
 
+function orderQuestions(questions) {
+  if (state.sort === "shuffle") {
+    const stableQuestions = [...questions].sort((left, right) => {
+      const leftId = String(left.id);
+      const rightId = String(right.id);
+      return leftId < rightId ? -1 : leftId > rightId ? 1 : 0;
+    });
+    return seededShuffle(stableQuestions, state.shuffleSeed);
+  }
+  return [...questions].sort(compareQuestions);
+}
+
+function updateShuffleControls() {
+  const isShuffled = state.sort === "shuffle";
+  elements.shuffleButton.textContent = isShuffled ? "再シャッフル" : "シャッフル";
+  elements.shuffleButton.title = isShuffled
+    ? `現在のseed: ${state.shuffleSeed}`
+    : "現在の絞り込み条件を保ったまま順番をシャッフル";
+}
+
 function applyFilters() {
-  state.filteredQuestions = state.questions
+  const matchingQuestions = state.questions
     .filter(matchesSearch)
     .filter((question) => !state.difficulty || String(question.difficulty) === state.difficulty)
-    .filter((question) => !state.tag || (question.tags ?? []).includes(state.tag))
-    .sort(compareQuestions);
+    .filter((question) => !state.tag || (question.tags ?? []).includes(state.tag));
+  state.filteredQuestions = orderQuestions(matchingQuestions);
 
   if (!state.filteredQuestions.some((question) => question.id === state.focusedQuestionId)) {
     state.focusedQuestionId = null;
   }
 
+  syncViewStateToUrl();
+  updateShuffleControls();
   renderQuestions();
 }
 
@@ -362,7 +449,7 @@ function moveQuestionFocus(direction) {
   focusQuestionAt(nextIndex);
 }
 
-async function loadTheme(themeId) {
+async function loadTheme(themeId, viewState = null) {
   const requestedTheme =
     state.manifest.find((theme) => theme.id === themeId) ?? state.manifest[0];
   if (!requestedTheme) throw new Error("公開できるテーマがありません。");
@@ -377,12 +464,16 @@ async function loadTheme(themeId) {
   state.questions = Array.isArray(payload.questions) ? payload.questions : [];
   state.visibleAnswers.clear();
   state.focusedQuestionId = null;
-  state.search = "";
-  state.difficulty = "";
-  state.tag = "";
-  elements.searchInput.value = "";
-  elements.difficultySelect.value = "";
-  setThemeInUrl(requestedTheme.id);
+  state.search = viewState?.search ?? "";
+  state.difficulty = viewState?.difficulty ?? "";
+  state.tag = viewState?.tag ?? "";
+  state.sort = viewState?.sort ?? "id";
+  state.shuffleSeed = state.sort === "shuffle"
+    ? viewState?.shuffleSeed || generateShuffleSeed()
+    : "";
+  elements.searchInput.value = state.search;
+  elements.difficultySelect.value = state.difficulty;
+  elements.sortSelect.value = state.sort;
   populateThemeSelect();
   populateTagSelect();
   updateThemeSummary();
@@ -391,11 +482,12 @@ async function loadTheme(themeId) {
 
 async function initialize() {
   try {
+    const viewState = getViewStateFromUrl();
     const response = await fetch("./data/index.json");
     if (!response.ok) throw new Error("テーマ一覧の取得に失敗しました。");
     const payload = await response.json();
     state.manifest = Array.isArray(payload.themes) ? payload.themes : [];
-    await loadTheme(getThemeFromUrl());
+    await loadTheme(viewState.theme, viewState);
   } catch (error) {
     elements.quizList.hidden = true;
     elements.emptyState.hidden = true;
@@ -444,7 +536,18 @@ elements.tagSelect.addEventListener("change", () => {
 
 elements.sortSelect.addEventListener("change", () => {
   state.sort = elements.sortSelect.value;
+  state.shuffleSeed = state.sort === "shuffle"
+    ? state.shuffleSeed || generateShuffleSeed()
+    : "";
   applyFilters();
+});
+
+elements.shuffleButton.addEventListener("click", () => {
+  state.sort = "shuffle";
+  state.shuffleSeed = generateShuffleSeed();
+  elements.sortSelect.value = state.sort;
+  applyFilters();
+  announce(`${state.filteredQuestions.length}問をシャッフルしました`);
 });
 
 elements.themeSelect.addEventListener("change", async () => {
